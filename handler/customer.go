@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"github.com/MaxVast/go-rest-api-mongodb/database"
 	"github.com/MaxVast/go-rest-api-mongodb/models"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
@@ -14,46 +14,48 @@ import (
 )
 
 type ApiResponse struct {
-	Results int                `json:"results"`
-	Data    []models.Customers `json:"data"`
+	TotalItems int                `json:"totalItems"`
+	Data       []models.Customers `json:"data"`
 }
 
-func GetAllCustomers(w http.ResponseWriter, r *http.Request) {
+func GetAllCustomers(c *gin.Context) {
 	ctx := context.Background()
 
 	cursor, err := database.Collection.Find(ctx, bson.M{})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
-	defer cursor.Close(ctx)
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err := cursor.Close(ctx)
+		if err != nil {
+
+		}
+	}(cursor, ctx)
 
 	var customers []models.Customers
 	if err = cursor.All(ctx, &customers); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
 	results := len(customers)
 
 	response := ApiResponse{
-		Results: results,
-		Data:    customers,
+		TotalItems: results,
+		Data:       customers,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	// Return DATA JSON
+	c.JSON(http.StatusOK, response)
 }
 
-func GetCustomerByID(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idClient := vars["idClient"]
+func GetCustomerByID(c *gin.Context) {
+	idClient := c.Param("idClient")
 
 	idClientInt, err := strconv.Atoi(idClient)
 	if err != nil {
-		http.Error(w, "Invalid idClient format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid idClient format"})
 		return
 	}
 
@@ -65,17 +67,15 @@ func GetCustomerByID(w http.ResponseWriter, r *http.Request) {
 
 	err = database.Collection.FindOne(ctx, filter).Decode(&customer)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			http.Error(w, "Customer not found", http.StatusNotFound)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 			return
 		}
 		log.Printf("Erreur lors de la récupération du client : %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(customer); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	// Return DATA JSON
+	c.JSON(http.StatusOK, customer)
 }
