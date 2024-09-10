@@ -2,12 +2,11 @@ package routes
 
 import (
 	"github.com/MaxVast/go-rest-api-mongodb/handler"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func InitializeRoutes() *mux.Router {
-	router := mux.NewRouter()
-	router.HandleFunc("/customers", handler.GetAllCustomers).Methods("GET")
-	router.HandleFunc("/customer/{idClient}", handler.GetCustomerByID).Methods("GET")
-	return router
+func InitializeRoutes(r *gin.Engine) {
+	r.GET("/customers", handler.GetAllCustomers)
+	r.GET("/customer/:idClient", handler.GetCustomerByID)
+	r.GET("/funding-types", handler.GetFundingTypes)
 }
