@@ -18,14 +18,13 @@ func Connect() {
 	databaseCollection := os.Getenv("MONGOCOLLECTION")
 
 	if mongoURI == "" {
-		log.Fatal("MONGOURI non défini dans le fichier .env")
+		log.Fatal("MONGOURI not defined in .env file")
 	}
 	if databaseName == "" {
-		log.Fatal("MONGODBDB non défini dans le fichier .env")
+		log.Fatal("MONGODBDB not defined in .env file")
 	}
-
 	if databaseCollection == "" {
-		log.Fatal("MONGOCOLLECTION non défini dans le fichier .env")
+		log.Fatal("MONGOCOLLECTION not defined in .env file")
 	}
 
 	clientOptions := options.Client().ApplyURI(mongoURI)
