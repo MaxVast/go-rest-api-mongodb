@@ -28,5 +28,5 @@ func ConnectSql() {
 		log.Fatalf("Error checking connection to SQL Server: %v", err)
 	}
 
-	fmt.Println("Connected to SQL Server.")
+	log.Println("Connected to SQL Server.")
 }
