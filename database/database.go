@@ -9,8 +9,10 @@ import (
 	"time"
 )
 
-var Client *mongo.Client
-var Collection *mongo.Collection
+var (
+	Client     *mongo.Client
+	Collection *mongo.Collection
+)
 
 func Connect() {
 	mongoURI := os.Getenv("MONGOURI")
