@@ -9,4 +9,5 @@ func InitializeRoutes(r *gin.Engine) {
 	r.GET("/customers", handler.GetAllCustomers)
 	r.GET("/customer/:idClient", handler.GetCustomerByID)
 	r.GET("/funding-types", handler.GetFundingTypes)
+	r.GET("/customer/name/:name/infos", handler.GetInfoCustomerByName)
 }
