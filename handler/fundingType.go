@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/MaxVast/go-rest-api-mongodb/database"
-	"github.com/MaxVast/go-rest-api-mongodb/models"
+	"github.com/MaxVast/go-rest-api-mongodb/models/sqlServer"
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -18,9 +18,9 @@ func GetFundingTypes(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var fundingTypes []models.FundingType
+	var fundingTypes []sqlServer.FundingType
 	for rows.Next() {
-		var ft models.FundingType
+		var ft sqlServer.FundingType
 		if err := rows.Scan(&ft.ID, &ft.Name); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error reading results : %v", err)})
 			return
