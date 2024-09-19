@@ -2,9 +2,13 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/MaxVast/go-rest-api-mongodb/database"
 	"github.com/MaxVast/go-rest-api-mongodb/models"
+	"github.com/MaxVast/go-rest-api-mongodb/models/sqlServer"
+	"github.com/MaxVast/go-rest-api-mongodb/service"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -78,4 +82,38 @@ func GetCustomerByID(c *gin.Context) {
 
 	// Return DATA JSON
 	c.JSON(http.StatusOK, customer)
+}
+
+func GetInfoCustomerByName(c *gin.Context) {
+	nameClient := c.Param("name")
+
+	// Prepare PS
+	query := "EXEC ps_API_L_CLIENT @nom = @nameParam"
+	rows, err := database.DB.Query(query, sql.Named("nameParam", nameClient))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error while executing the procedure : %v", err)})
+		return
+	}
+	defer rows.Close()
+
+	var infoCustomers []sqlServer.InfoCustomers
+
+	for rows.Next() {
+		var infoCustomer sqlServer.InfoCustomers
+		if err := service.ScanStruct(&infoCustomer, rows); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error scanning data : %v", err)})
+			return
+		}
+
+		infoCustomers = append(infoCustomers, infoCustomer)
+	}
+
+	totalItems := len(infoCustomers)
+
+	if err := rows.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error processing results : %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": infoCustomers, "totalItems": totalItems})
 }
